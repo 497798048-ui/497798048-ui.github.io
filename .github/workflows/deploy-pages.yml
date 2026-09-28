@@ -1,0 +1,54 @@
+name: Deploy CHOUCHOU Holographic Card
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download card site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/assets
+          base="https://chouchou-holo-card.just-cake-1952.chatgpt.site"
+          for file in index.html style.css app.bundle.js card-config.json icons.data.js; do
+            curl --fail --location --retry 3 "$base/$file" -o "_site/$file"
+          done
+          for file in background.png subject.png lineart.png effects.png card.glb text.png; do
+            curl --fail --location --retry 3 "$base/assets/$file" -o "_site/assets/$file"
+          done
+          touch _site/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
