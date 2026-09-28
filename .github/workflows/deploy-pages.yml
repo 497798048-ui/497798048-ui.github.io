@@ -1,3 +1,4 @@
+# Redeploy after selecting GitHub Actions
 name: Deploy CHOUCHOU Holographic Card
 
 on:
